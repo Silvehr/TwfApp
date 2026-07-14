@@ -31,7 +31,7 @@ span{
 }
 
 .joke-object-info, .joke-object-actions{
-    height: 80px;
+    min-height: 80px;
 }
 
 .joke-object-actions {

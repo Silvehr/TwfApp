@@ -1,14 +1,17 @@
-﻿@using TwfApp.Components.Partials
+﻿@using Microsoft.EntityFrameworkCore
+@using TwfApp.Application.Services
+@using TwfApp.Components.Partials
+@using TwfApp.Infrastructure
 @using TwfApp.Types.Config
 @using TwfApp.Types.Modals
 @inherits LayoutComponentBase
-@inject ServiceStartupResultCollectorService ResultCollector
+@inject KierownikappDbContext DbContext
 @inject NavigationManager NavigationManager
 @inject ModalService Modal
-@inject JokeService JokeService
+@inject IJokeService JokeService
 @inject AppConfig Config
 
-<ModalHost @ref="_modalHost"/>
+<ModalHost />
 
 <div class="page">
     <span class="spacer"></span>
@@ -17,16 +20,14 @@
         @Body
     </main>
     <Drawer>
-        <DrawerEntryButton Name="Strona Główna" Icon="logo.png" OnClickCallback='async () => NavigationManager.NavigateTo("/") ' />
-        <DrawerEntryButton Name="Zarządzaj przedmiotami" Icon="boxes.svg" OnClickCallback='async () => NavigationManager.NavigateTo("/items") ' />
+        <DrawerEntryButton Name="Strona Główna" Icon="logo.png" OnClickCallback='() => NavigationManager.NavigateTo("/") ' />
+        <DrawerEntryButton Name="Zarządzaj przedmiotami" Icon="boxes.svg" OnClickCallback='() => NavigationManager.NavigateTo("/items") ' />
         <DrawerEntryButton Name="Importuj przedmioty" Icon="download.svg" OnClickCallback="Import" />
         <DrawerEntryButton Name="Eksportuj przedmioty" Icon="upload.svg" OnClickCallback="Export" />
     </Drawer>
 </div>
 
 @code {
-    private ModalHost _modalHost;
-
     private static readonly FilePickerFileType JsonFileType = new FilePickerFileType(
         new Dictionary<DevicePlatform, IEnumerable<string>>
         {
@@ -37,92 +38,53 @@
         }
     );
     
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        var jokeServiceInitializationResult = ResultCollector.GetServiceInitializationResult<JokeService>();
-        
-        if (jokeServiceInitializationResult is not null)
-        {
-            await Modal.ShowMessageAsync("Błąd uruchomienia aplikacji", jokeServiceInitializationResult.Message);
-        }  
-    }
-
     private async Task Import()
     {
+        var file = await FilePicker.Default.PickAsync(options: new PickOptions { FileTypes = JsonFileType });
+
+        if (file is null)
+            return;
+
+        await using var stream = await file.OpenReadAsync();
+        
+        JokeObjectExportData? jokeObjects;
         try
         {
-            var file = await FilePicker.Default.PickAsync();
-
-            if (file is null)
-                return;
-
-            await using var stream = await file.OpenReadAsync();
-            var jokeObjects = await JsonSerializer.DeserializeAsync<JokeObjectExportData>(stream);
-
-            if (jokeObjects is null)
-            {
-                await Modal.ShowMessageAsync("Import zakończył się niepowodzeniem", "Dane są puste");
-                return;
-            }
-
-            if (!DataVersion.IsCompatible(Config.Version, jokeObjects.Version))
-            {
-                await Modal.ShowMessageAsync("Import zakończył się niepowodzeniem", "Dane są niekompatybilne z aktualną wersją aplikacji");
-                return;
-            }
-
-            await JokeService.Database.AppendRangeAsync(jokeObjects.JokeObjects);
-            if(new Uri(NavigationManager.Uri).AbsolutePath == "/items")
-            {
-                NavigationManager.Refresh(true);
-            }
+            jokeObjects = await JsonSerializer.DeserializeAsync<JokeObjectExportData>(stream);
         }
-        catch(JsonException)
+        catch (JsonException)
         {
-            await Modal.ShowMessageAsync("Import zakończył się niepowodzeniem", "Dane są w niepoprawnym formacie");
+            await Modal.ShowMessageAsync("Błąd importu", "Dane są w niepoprawnym formacie");
+            return;
         }
-        catch (Exception ex)
-        {   
-            await Modal.ShowMessageAsync("Import zakończył się niepowodzeniem", ex.Message);
+
+        if (jokeObjects is null)
+        {
+            await Modal.ShowMessageAsync("Błąd importu", "Dane są puste");
+            return;
+        }
+
+        if (!DataVersion.IsCompatible(Config.Version, jokeObjects.Version))
+        {
+            await Modal.ShowMessageAsync("Błąd importu", "Dane są niekompatybilne z aktualną wersją aplikacji");
+            return;
+        }
+
+        var insertSql = string.Join(',', jokeObjects.JokeObjects.Select(jo => $"('{jo.Author}','{jo.Name}','{jo.Description}',{(int)jo.Type},'{jo.CreationDate:yyyy-MM-dd}')"));
+        await DbContext.Database.ExecuteSqlRawAsync($"INSERT INTO JokeObjects (Author, Name, Description, Type, CreationDate) VALUES {insertSql} ON Conflict(Name) DO NOTHING;");
+            
+        if(new Uri(NavigationManager.Uri).AbsolutePath == "/items")
+        {
+            NavigationManager.Refresh(true);
         }
     }
 
     private async Task Export()
     {
-        try
-        {
-            var exportResult = await JokeService.ExportData();
-            if (!exportResult.IsSuccess)
-            {
-                await Modal.ShowMessageAsync("Błąd eksportu", exportResult.Error.Message);
-                return;
-            }
-            
-            var json = JsonSerializer.Serialize(exportResult.Value);
-
-
-            if (DeviceInfo.Current.Platform == DevicePlatform.Android || DeviceInfo.Current.Platform == DevicePlatform.iOS)
-            {
-                var path = Path.Combine(FileSystem.Current.CacheDirectory, "jokeExport.json");
-                await File.WriteAllTextAsync(path, json);
-
-                await Share.Default.RequestAsync(new ShareFileRequest { Title = "Eksportuj przedmioty", File = new ShareFile(path) });
-            }
-            else
-            {
-                var result = await FilePicker.Default.PickAsync(new PickOptions
-                {
-                    PickerTitle = "Wybierz miejsce do zapisania pliku",
-                    FileTypes = JsonFileType
-                });
-                if (result is null)
-                    return;
-            }
-        }
-        catch (Exception ex)
-        {
-            await Modal.ShowMessageAsync("Błąd eksportu", ex.Message);
-        }
+        var path = Path.Combine(FileSystem.Current.CacheDirectory, "jokeExport.json");
+        var stream = File.OpenWrite(path);
+        await JsonSerializer.SerializeAsync(stream, await JokeService.ExportData());
+        
+        await Share.Default.RequestAsync(new ShareFileRequest { Title = "Eksportuj przedmioty", File = new ShareFile(path) });
     }
 }

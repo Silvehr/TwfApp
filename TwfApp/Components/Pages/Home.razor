@@ -1,12 +1,6 @@
 ﻿@page "/";
-@using System.Data.Common
-@using Microsoft.Data.Sqlite
-@using TwfApp.Types.Config
-@using TwfApp.Types.Modals
-@inject NavigationManager Navigation;
-@inject JokeService JokeService;
-@inject AppInitializer Initializer
-@inject ModalService Modal;
+@using TwfApp.Application.Services
+@inject IJokeService JokeService;
 <div class="home-root">
     <h2 style="width: 100%; font-family: 'ComicSans', sans-serif;">
         Żart na @(DateOnly.FromDateTime(DateTime.Now).ToString("dd.MM.yyyy"))
@@ -22,13 +16,4 @@
 
 @code{
     MarkupString RawJoke => (MarkupString)(JokeService.CurrentJoke is null ? "Błąd generowania żartu" : JokeService.CurrentJoke.Content);
-    private static readonly FilePickerFileType JsonFileType = new(
-        new Dictionary<DevicePlatform, IEnumerable<string>>
-        {
-            { DevicePlatform.WinUI, [".json"] },
-            { DevicePlatform.MacCatalyst, ["public.json"] },
-            { DevicePlatform.Android, ["application/json","text/json","text/plain"] },
-            { DevicePlatform.iOS, ["public.json"] }
-        }
-    );
 }

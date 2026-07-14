@@ -94,9 +94,24 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Resources\Raw\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\TwfApp.Application\TwfApp.Application.csproj" />
+      <ProjectReference Include="..\TwfApp.Infrastructure\TwfApp.Infrastructure.csproj" />
     </ItemGroup>
 
 	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">

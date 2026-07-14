@@ -1,7 +1,9 @@
 ﻿@page "/items/{Mode}/{Id:int?}";
-@using System.Data.Common
+@using Microsoft.EntityFrameworkCore
+@using TwfApp.Core
+@using TwfApp.Infrastructure
 @using TwfApp.Types.Modals
-@inject JokeService JokeService;
+@inject KierownikappDbContext DbContext;
 @inject ModalService Modal;
 @inject NavigationManager Navigation;
 
@@ -80,7 +82,7 @@
     public int? Id { get; set; }
 
     [Parameter]
-    public string Mode { get; set; }
+    public required string Mode { get; set; }
 
     private JokeObject? _model;
 
@@ -98,19 +100,10 @@
                     return;
                 }
 
-                var result = await JokeService.Database.GetByIdAsync(Id.Value);
-                if (!result.IsSuccess)
-                {
-                    await Modal.ShowMessageAsync("Błąd", $"Aplikacja trafiła na nieoczekiwany bład: {result.Error!.Message}");
-                    return;
-                }
-                _model = result.Value!;
-
-                if(_model is null)
-                {
-                    Navigation.NotFound();
-                    return;
-                }
+                _model = await DbContext.JokeObjects.FirstOrDefaultAsync(jo => jo.Id == Id);
+                
+                if(_model is null) Navigation.NotFound();
+                
                 break;
 
             case "new":
@@ -120,40 +113,40 @@
         }
     }
 
-    private async Task Delete()
+    private void Delete()
     {
-        var result = await JokeService.Database.RemoveAsync(_model!.Id);
-        if (result is not null)
-            await Modal.ShowMessageAsync("Błąd usuwania", result.Message);
-        else
-            Navigation.NavigateTo("/items");
+        DbContext.JokeObjects.Where(j => j.Id == _model.Id).ExecuteDelete();
+        Navigation.NavigateTo("/items");
     }
 
     private async Task Save()
     { 
         if (Mode == "edit")
         {
-            var editResult = await JokeService.Database.EditAsync(_model!);
-            if(editResult is not null)
-                await Modal.ShowMessageAsync("Błąd edycji", $"Aplikacja trafiła na nieoczekiwany błąd podczas zapisywania zmian: {editResult.Message}");
-        } 
+            int count = await DbContext.JokeObjects.Where(jo => jo.Id == _model.Id).ExecuteUpdateAsync(jo =>
+            {
+                jo.SetProperty(j => j.Name, _model!.Name)
+                    .SetProperty(j => j.Author, _model.Author)
+                    .SetProperty(j => j.Description, _model.Description)
+                    .SetProperty(j => j.Type, _model.Type)
+                    .SetProperty(j => j.CreationDate, _model.CreationDate)
+                    .SetProperty(j => j.Editable, _model.Editable);
+            });
+
+            if (count == 0)
+                await Modal.ShowMessageAsync("Błąd edycji", "Nie znaleziono obiektu do edycji");
+        }
         else
         {
-            var result = await JokeService.Database.CreateAsync(_model.Author, _model.Name, _model.Description, _model.Type, _model.CreationDate);
-
-            if(!result.IsSuccess)
+            var existingObject = await DbContext.JokeObjects.FirstOrDefaultAsync(jo => jo.Name == _model!.Name);
+            if (existingObject is not null)
             {
-                switch (result.Error)
-                {
-                    case InvalidOperationException:
-                        await Modal.ShowMessageAsync("Błąd tworzenia", "Obiekt z tą samą nazwą już istnieje!");
-                        break;
-
-                    case DbException dbE:
-                        await Modal.ShowMessageAsync("Błąd tworzenia", $"Aplikacja trafila na nieoczekiwany błąd podczas tworzenia: {dbE.Message}");
-                        break;
-                }
+                await Modal.ShowMessageAsync("Błąd tworzenia przedmiotu", "Przedmito z taką nazwą już istnieje");
+                return;
             }
+            
+            await DbContext.JokeObjects.AddAsync(_model);
+            await DbContext.SaveChangesAsync();
         }
         Navigation.NavigateTo($"/items/view/{Id}"); 
     }

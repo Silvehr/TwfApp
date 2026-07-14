@@ -1,4 +1,7 @@
 <Solution>
+  <Project Path="TwfApp.Application/TwfApp.Application.csproj" />
+  <Project Path="TwfApp.Core/TwfApp.Core.csproj" />
+  <Project Path="TwfApp.Infrastructure/TwfApp.Infrastructure.csproj" />
   <Project Path="TwfApp/TwfApp.csproj">
     <Deploy Solution="Debug|*" />
   </Project>

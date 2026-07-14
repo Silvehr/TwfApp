@@ -1,0 +1,22 @@
+﻿@page "/loading"
+@using TwfApp.Services
+@inject AppInitializer AppInitializer
+@inject NavigationManager NavigationManager
+
+<div class="loading-container">
+    <h1>@_message</h1>
+</div>
+
+@code {
+    private string _message = "Loading...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try {
+            await AppInitializer.InitializedTask;
+            NavigationManager.NavigateTo("/");
+        } catch (Exception ex) {
+            _message = ex.Message;
+        }
+    }
+}

@@ -1,8 +1,6 @@
-﻿using TwfApp.Types;
-
-namespace TwfApp
+﻿namespace TwfApp
 {
-    public partial class App : Application
+    public partial class App : Microsoft.Maui.Controls.Application
     {
         private readonly IServiceProvider _serviceProvider;
 

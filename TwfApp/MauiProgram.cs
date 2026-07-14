@@ -1,7 +1,8 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using SQLitePCL;
-using TwfApp.Types;
+using TwfApp.Application.Services;
+using TwfApp.Infrastructure;
+using TwfApp.Services;
 using TwfApp.Types.Config;
 using TwfApp.Types.Modals;
 
@@ -12,22 +13,29 @@ namespace TwfApp
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
-            builder
-                .UseMauiApp<App>()
+            builder .UseMauiApp<App>()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("ComicSans.ttf", "ComicSans");
                 });
 
+            var config = new AppConfig(new DataVersion(1, 1), FileSystem.AppDataDirectory, "currentJoke", "kierownikapp");
+            builder.Services.AddSingleton(config);
             builder.Services.AddSingleton<ModalService>();
-            builder.Services.AddSingleton<ServiceStartupResultCollectorService>();
-            builder.Services.AddSingleton(new AppConfig(new DataVersion(1,1), FileSystem.AppDataDirectory, "currentJoke", "jokes"));
-            builder.Services.AddSingleton(new SqliteConnection($"Data Source={FileSystem.AppDataDirectory}/jokes.db"));
-            builder.Services.AddSingleton<JokeObjectDb>();
-            builder.Services.AddSingleton<JokeService>();
+            builder.Services.AddDbContext<KierownikappDbContext>(opt =>
+            {
+                opt.UseSqlite($"Data Source={Path.Join(config.AppDataDirectory, config.JokesDatabaseName)}.db;");
+            });
+            
+            builder.Services.AddSingleton<IJokeService, JokeService>();
+            
+            builder.Services.AddSingleton<KierownikappDbContextInitializer>();
+            builder.Services.AddSingleton<IInitializer>(sp => sp.GetRequiredService<JokeServiceInitializer>());
+            builder.Services.AddSingleton<IInitializer>(sp => sp.GetRequiredService<KierownikappDbContextInitializer>());
+            builder.Services.AddSingleton<JokeServiceInitializer>();
             builder.Services.AddSingleton<AppInitializer>();
-
+            
             builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG
@@ -35,65 +43,71 @@ namespace TwfApp
     		builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            var app = builder.Build();
+
+            _ = Task.Run(async () =>
+            {
+                using var scope = app.Services.CreateScope();
+                var initializer = scope.ServiceProvider.GetRequiredService<AppInitializer>();
+                await initializer.InitializeAsync();
+            });
+            
+            
+            
+            return app;
         }
     }
 
-    public class AppInitializer
+    public sealed class JokeServiceInitializer(IServiceProvider services, KierownikappDbContextInitializer dbContextInitializer) : IInitializer
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ServiceStartupResultCollectorService _resultCollector;
-        public AppInitializer(IServiceProvider serviceProvider, ServiceStartupResultCollectorService resultCollector)
-        {
-            _serviceProvider = serviceProvider;
-            _resultCollector = resultCollector;
-        }
+        private readonly TaskCompletionSource _initializedTcs = new();
+        
+        public bool IsInitialized { get; private set; }
+        public Task InitializedTask => _initializedTcs.Task;
 
         public async Task InitializeAsync()
         {
-            await _serviceProvider.GetRequiredService<SqliteConnection>().OpenAsync();
-            _resultCollector.AddServiceInitializationResult<JokeObjectDb>(await _serviceProvider.GetRequiredService<JokeObjectDb>().Initialize());
-            _resultCollector.AddServiceInitializationResult<JokeService>(await _serviceProvider.GetRequiredService<JokeService>().Initialize());
-        }
-
-        public async Task ReinitializeAsync()
-        {
-            await StopServicesAsync();
-
-            await ClearStateAsync();
-
-            await InitializeAsync();
-        }
-
-        private async Task StopServicesAsync()
-        {
-            await _serviceProvider.GetRequiredService<SqliteConnection>().CloseAsync();
-            await _serviceProvider.GetRequiredService<JokeObjectDb>().Stop();
-            await _serviceProvider.GetRequiredService<JokeService>().Stop();
-        }
-
-        private Task ClearStateAsync()
-        {
-            var jokeService = _serviceProvider.GetRequiredService<JokeService>();
-            File.Delete(jokeService.Database.DbFilePath);
-            File.Delete(jokeService.CurrentJokeFilePath);
-            return Task.CompletedTask;
+            await dbContextInitializer.InitializedTask;
+            
+            using var scope = services.CreateScope();
+            var jokeService = scope.ServiceProvider.GetRequiredService<IJokeService>();
+            await jokeService.Initialize();
+            IsInitialized = true;
+            _initializedTcs.SetResult();
         }
     }
-
-    public class ServiceStartupResultCollectorService
+    public sealed class KierownikappDbContextInitializer(IServiceProvider services) : IInitializer
     {
-        private readonly Dictionary<Type, Exception?> _serviceResults = [];
+        private readonly TaskCompletionSource _initializedTcs = new();
+        
+        public bool IsInitialized { get; private set; }
+        public Task InitializedTask => _initializedTcs.Task;
 
-        public void AddServiceInitializationResult<T>(Exception? result)
+        public async Task InitializeAsync()
         {
-            if(!_serviceResults.TryAdd(typeof(T), result))
-                _serviceResults[typeof(T)] = result;
-        }
+            try
+            {
+                using var scope = services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<KierownikappDbContext>();
 
-        public Exception? GetServiceInitializationResult<T>()
-        {
-            return _serviceResults[typeof(T)];
+                await db.Database.MigrateAsync();
+                
+                await db.Database.ExecuteSqlRawAsync("""
+                                               INSERT INTO "JokeObjects" (Author, Name, Description, Type, CreationDate, Editable) VALUES
+                                               ('Gall Anonim', 'Sosna Limba', 'Podstawowa i niezmienna forma żartu kierownika', 0,'2023-06-29 00:00:00', 0),
+                                               ('Gall Anonim', 'Krowa', 'Podstawowa i niezmienna forma żartu kierownika', 0,'2023-06-29 00:00:00', 0),
+                                               ('Gall Anonim', 'Śliwka w Czekoladzie', 'Podstawowa i niezmienna forma żartu kierownika', 1,'2023-06-29 00:00:00', 0),
+                                               ('Gall Anonim', 'Wektor', 'Podstawowa i niezmienna forma żartu kierownika', 0,'2023-06-29 00:00:00', 0),
+                                               ('Gall Anonim', 'Baza', 'Podstawowa i niezmienna forma żartu kierownika', 0,'2023-06-29 00:00:00', 0) 
+                                               ON CONFLICT(Name) DO NOTHING;
+                                               """);
+                IsInitialized = true;
+                _initializedTcs.SetResult();
+            }
+            catch (Exception ex)
+            {
+                _initializedTcs.SetException(ex);
+            }
         }
     }
 }

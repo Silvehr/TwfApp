@@ -1,7 +1,8 @@
-﻿@inject JokeService JokeService;
-@inject ModalService Modal;
+﻿@inject KierownikappDbContext DbContext;
+@using Microsoft.EntityFrameworkCore
 @using TwfApp.Components.Partials
-@using TwfApp.Types.Modals
+@using TwfApp.Core
+@using TwfApp.Infrastructure
 @page "/items"
 
 <div class="component-container">
@@ -17,7 +18,7 @@
         </div>
         <div class="input-group om-item">
             <NavLink class="btn btn-primary" href="/items/new" style="width: 100%">
-                Stwórz przedmiot &nbsp;&nbsp;<img src="boxes-inline.svg" style="height: 20px" />
+                Stwórz przedmiot &nbsp;<img src="boxes-inline.svg" style="height: 20px" />
             </NavLink>
         </div>
     </div>
@@ -44,15 +45,6 @@
 
     private async Task LoadJokeObjects()
     {
-        var result = await JokeService.Database.GetJokeObjectsAsync(_searchTerm);
-        if (!result.IsSuccess)
-        {
-            await Modal.ShowMessageAsync("Błąd ładowania przedmiotów", $"Aplikacja trafiła na nieoczekiwany błąd podczas ładowania przedmiotów: {result.Error!.Message}");
-            _jokeObjects = [];
-        }
-        else
-        {
-            _jokeObjects = result.Value!.ToList();
-        }
+        _jokeObjects = await DbContext.JokeObjects.Where(jo => EF.Functions.Like(jo.Name, $"%{_searchTerm}%") || EF.Functions.Like(jo.Author, $"%{_searchTerm}%")).ToListAsync();
     }
 }

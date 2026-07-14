@@ -1,22 +1,23 @@
-﻿using TwfApp.Types;
+﻿using TwfApp.Services;
+using TwfApp.Types;
 
 namespace TwfApp
 {
     public partial class MainPage : ContentPage
     {
-        private readonly IServiceProvider _serviceProvider;
-
         public MainPage(IServiceProvider serviceProvider)
         {
-            _serviceProvider = serviceProvider;
             InitializeComponent();
+            
+            var initializer = serviceProvider.GetRequiredService<AppInitializer>();
+            if (!initializer.IsInitialized)
+            {
+                blazorWebView.StartPath = "/loading";
+            }
         }
 
-        protected override async void OnAppearing()
+        protected override void OnAppearing()
         {
-            base.OnAppearing();
-
-            await _serviceProvider.GetRequiredService<AppInitializer>().InitializeAsync();
         }
     }
 }
