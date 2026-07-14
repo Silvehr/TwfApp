@@ -106,10 +106,9 @@ namespace TwfApp.Types
         public async Task<Result<JokeObjectExportData, Exception>> ExportData()
         {
             var result = await Database.GetJokeObjectsAsync();
-            if (result.IsSuccess)
-                return new(new JokeObjectExportData(config.Version, [.. (result.Value!).Select(j => new JokeObjectDto(j.Author, j.Name, j.Description, j.Type, j.CreationDate))]));
-            else
-                return new(result.Error!);
+            return result.IsSuccess 
+                ? new Result<JokeObjectExportData, Exception>(new JokeObjectExportData(config.Version, [.. (result.Value!).Select(j => new JokeObjectDto(j.Author, j.Name, j.Description, j.Type, j.CreationDate))])) 
+                : new Result<JokeObjectExportData, Exception>(result.Error!);
         }
     }
 }

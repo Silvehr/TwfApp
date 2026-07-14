@@ -17,6 +17,7 @@ namespace TwfApp
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                    fonts.AddFont("ComicSans.ttf", "ComicSans");
                 });
 
             builder.Services.AddSingleton<ModalService>();

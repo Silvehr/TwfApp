@@ -19,20 +19,15 @@ namespace TwfApp.Types
         public string DbFilePath { get; }
         private readonly SqliteConnection _db;
         private readonly AppConfig _config;
-
+        private readonly JsonSerializerOptions _exportOptions = new() { WriteIndented = true };
+        
         public JokeObjectDb(SqliteConnection db, AppConfig config)
         {
             _db = db;
             _config = config;
             DbFilePath = Path.Join(config.AppDataDirectory, $"{config.JokesDatabaseName}.db");
         }
-
-        /// <summary>
-        /// Emergency export of tables JokeObjects and DataVersion to JSON or SQL.
-        /// Tries to work regardless of exact schema: reads column names dynamically.
-        /// </summary>
-        /// <param name="asSql">If true returns SQL INSERT statements, otherwise JSON.</param>
-
+        
         public bool IsInitialized { get; private set; } = false;
 
         public async Task<Exception?> Initialize()
@@ -43,8 +38,8 @@ namespace TwfApp.Types
 
             try
             {
-                using var command = _db.CreateCommand();
-                using var stream = await FileSystem.OpenAppPackageFileAsync("Migrations/_snapshot.sql");
+                await using var command = _db.CreateCommand();
+                await using var stream = await FileSystem.OpenAppPackageFileAsync("Migrations/_snapshot.sql");
                 using var reader = new StreamReader(stream);
 
                 command.CommandText = await reader.ReadToEndAsync();
@@ -76,11 +71,11 @@ namespace TwfApp.Types
             try
             {
                 var result = await command.ExecuteScalarAsync();
-                return new(Convert.ToInt32(result));
+                return new Result<int, DbException>(Convert.ToInt32(result));
             }
             catch(DbException e)
             {
-                return new(e);
+                return new Result<int, DbException>(e);
             }
         }
 
@@ -107,7 +102,7 @@ namespace TwfApp.Types
 
         public async Task<Result<bool, DbException>> ExistsWithName(string name)
         {
-            using var command = _db.CreateCommand();
+            await using var command = _db.CreateCommand();
             command.CommandText = "SELECT EXISTS(SELECT 1 FROM JokeObjects WHERE Name = @Name);";
             command.Parameters.AddWithValue("@Name", name);
             object? scalar;
@@ -117,27 +112,35 @@ namespace TwfApp.Types
             }
             catch(DbException e)
             {
-                return new(e);
+                return new Result<bool, DbException>(e);
             }
 
-            if (scalar is null || scalar is DBNull) return new(false);
-            if (scalar is long l) return new(l != 0);
-            if (scalar is int i) return new(i != 0);
-            if (scalar is bool b) return new(b);
-
-            try
+            switch (scalar)
             {
-                return new(Convert.ToBoolean(scalar));
-            }
-            catch
-            {
-                return new(scalar.ToString() == "1");
+                case null:
+                case DBNull:
+                    return new Result<bool, DbException>(false);
+                case long l:
+                    return new Result<bool, DbException>(l != 0);
+                case int i:
+                    return new Result<bool, DbException>(i != 0);
+                case bool b:
+                    return new Result<bool, DbException>(b);
+                default:
+                    try
+                    {
+                        return new Result<bool, DbException>(Convert.ToBoolean(scalar));
+                    }
+                    catch
+                    {
+                        return new Result<bool, DbException>(scalar.ToString() == "1");
+                    }
             }
         }
 
         public async Task<Result<JokeObject?, DbException>> GetByIdAsync(int id)
         {
-            using var command = _db.CreateCommand();
+            await using var command = _db.CreateCommand();
             command.CommandText = "SELECT Id, Author, Name, Description, Type, CreationDate, Editable FROM JokeObjects WHERE Id = @Id;";
             command.Parameters.AddWithValue("@Id", id);
             SqliteDataReader? reader;
@@ -148,7 +151,7 @@ namespace TwfApp.Types
             }
             catch (DbException e) 
             {
-                return new(e);
+                return new Result<JokeObject?, DbException>(e);
             }
 
             if (await reader.ReadAsync())
@@ -164,12 +167,12 @@ namespace TwfApp.Types
                     reader.GetBoolean(6));
 
             await reader.DisposeAsync();
-            return new(result);
+            return new Result<JokeObject?, DbException>(result);
         }
 
         public async Task<Result<IEnumerable<JokeObject>, DbException>> GetByAuthorAsync(string authorName)
         {
-            using var command = _db.CreateCommand();
+            await using var command = _db.CreateCommand();
             command.CommandText = "SELECT Id, Author, Name, Description, Type, CreationDate, Editable FROM JokeObjects WHERE Author = @Author;";
             command.Parameters.AddWithValue("@Author", authorName);
 
@@ -181,7 +184,7 @@ namespace TwfApp.Types
             }
             catch(DbException e)
             {
-                return new(e);
+                return new Result<IEnumerable<JokeObject>, DbException>(e);
             }
 
             var jokeObjects = new List<JokeObject>();
@@ -218,12 +221,12 @@ namespace TwfApp.Types
             var existWithNameResult = await ExistsWithName(name);
 
             if (!existWithNameResult.IsSuccess)
-                return new(existWithNameResult.Error!);
+                return new Result<JokeObject?, Exception>(existWithNameResult.Error!);
 
             if (existWithNameResult.Value)
-                return new(new InvalidOperationException());
+                return new Result<JokeObject?, Exception>(new InvalidOperationException());
 
-            using var insertCmd = _db.CreateCommand();
+            await using var insertCmd = _db.CreateCommand();
             insertCmd.CommandText = "INSERT INTO JokeObjects (Author, Name, Description, Type, CreationDate) VALUES (@Author, @Name, @Description, @Type, @CreationDate);";
             insertCmd.Parameters.AddWithValue("@Author", author);
             insertCmd.Parameters.AddWithValue("@Name", name);
@@ -260,12 +263,12 @@ namespace TwfApp.Types
                 id64 = Convert.ToInt64(scalar);
 
             var id = Convert.ToInt32(id64);
-            return new(new JokeObject(id, author, name, description, type, creationDate));
+            return new Result<JokeObject?, Exception>(new JokeObject(id, author, name, description, type, creationDate));
         }
 
         public async Task<DbException?> EditAsync(JokeObject jokeObject)
         {
-            using var command = _db.CreateCommand();
+            await using var command = _db.CreateCommand();
             command.CommandText = "UPDATE JokeObjects SET Author = @NewAuthor, Name = @NewName, Description = @NewDescription, Type = @NewType,CreationDate = @NewCreationDate WHERE Id = @Id AND Editable = 1;";
 
             command.Parameters.AddWithValue("@Id", jokeObject.Id);
@@ -288,7 +291,7 @@ namespace TwfApp.Types
 
         public async Task<DbException?> RemoveAsync(int id)
         {
-            using var command = _db.CreateCommand();
+            await using var command = _db.CreateCommand();
             command.CommandText = "DELETE FROM JokeObjects WHERE Id = @Id AND Editable = 1;";
             command.Parameters.AddWithValue("@Id", id);
             try
@@ -305,7 +308,7 @@ namespace TwfApp.Types
         public async Task<Result<IEnumerable<JokeObject>, Exception>> GetJokeObjectsAsync(string namePart = "", int count = -1)
         {
             var jokeObjects = new List<JokeObject>();
-            using var command = _db.CreateCommand();
+            await using var command = _db.CreateCommand();
             command.CommandText = "SELECT Id, Author, Name, Description, Type, CreationDate, Editable FROM JokeObjects WHERE Name LIKE @NamePart";
             command.Parameters.AddWithValue("@NamePart", $"%{namePart}%");
             if (count > 0)
@@ -319,7 +322,7 @@ namespace TwfApp.Types
                 reader = await command.ExecuteReaderAsync();
             }
             catch (DbException e) {
-                return new(e);
+                return new Result<IEnumerable<JokeObject>, Exception>(e);
             }
 
             while (await reader.ReadAsync())
@@ -329,7 +332,7 @@ namespace TwfApp.Types
                     var id = reader.GetInt32(0);
                     var author = reader.GetString(1);
                     var name = reader.GetString(2);
-                    string? desc = reader.IsDBNull(3) ? null : reader.GetString(3);
+                    var desc = reader.IsDBNull(3) ? null : reader.GetString(3);
                     var type = (JokeObjectType)reader.GetInt32(4);
                     var creation = reader.GetDateTime(5);
                     var editable = reader.GetBoolean(6);
@@ -337,18 +340,18 @@ namespace TwfApp.Types
                 }
                 catch(Exception e)
                 {
-                    return new(e);
+                    return new Result<IEnumerable<JokeObject>, Exception>(e);
                 }
             }
 
-            return new(jokeObjects);
+            return new Result<IEnumerable<JokeObject>, Exception>(jokeObjects);
         }
 
         public async Task<Result<JokeObject[], Exception>> GetRandomObjectsByCategory(JokeObjectType searchedType, int count)
         {
             var jokeObjects = new JokeObject[count];
 
-            using var command = _db.CreateCommand();
+            await using var command = _db.CreateCommand();
             command.CommandText = "SELECT Id, Author, Name, Description, Type, CreationDate, Editable FROM JokeObjects WHERE Type = @SearchedType ORDER BY RANDOM() LIMIT @Count;";
             command.Parameters.AddWithValue("@Count", count);
             command.Parameters.AddWithValue("@SearchedType", (int)searchedType);
@@ -371,7 +374,7 @@ namespace TwfApp.Types
                     var id = reader.GetInt32(0);
                     var author = reader.GetString(1);
                     var name = reader.GetString(2);
-                    string? desc = reader.IsDBNull(3) ? null : reader.GetString(3);
+                    var desc = reader.IsDBNull(3) ? null : reader.GetString(3);
                     var type = (JokeObjectType)reader.GetInt32(4);
                     var creation = reader.GetDateTime(5);
                     var editable = reader.GetBoolean(6);
@@ -379,11 +382,11 @@ namespace TwfApp.Types
                 }
                 catch(Exception e)
                 {
-                    return new(error: e);
+                    return new Result<JokeObject[], Exception>(error: e);
                 }
             }
 
-            return new(value: jokeObjects);
+            return new Result<JokeObject[], Exception>(value: jokeObjects);
         }
 
 
@@ -401,17 +404,17 @@ namespace TwfApp.Types
                 foreach (var table in tables)
                 {
                     // check table exists
-                    using var chk = _db.CreateCommand();
+                    await using var chk = _db.CreateCommand();
                     chk.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name=@name;";
                     chk.Parameters.AddWithValue("@name", table);
                     var exists = await chk.ExecuteScalarAsync();
                     if (exists is null) continue;
 
                     // get columns
-                    using var colCmd = _db.CreateCommand();
+                    await using var colCmd = _db.CreateCommand();
                     colCmd.CommandText = $"PRAGMA table_info('{table}');";
                     var cols = new List<string>();
-                    using (var reader = await colCmd.ExecuteReaderAsync())
+                    await using (var reader = await colCmd.ExecuteReaderAsync())
                     {
                         while (await reader.ReadAsync())
                         {
@@ -423,9 +426,9 @@ namespace TwfApp.Types
                     {
                         // build INSERTs
                         var sb = new StringBuilder();
-                        using var sel = _db.CreateCommand();
+                        await using var sel = _db.CreateCommand();
                         sel.CommandText = $"SELECT * FROM '{table}';";
-                        using var r = await sel.ExecuteReaderAsync();
+                        await using var r = await sel.ExecuteReaderAsync();
                         while (await r.ReadAsync())
                         {
                             var colList = string.Join(", ", cols.Select(c => $"\"{c}\""));
@@ -434,21 +437,20 @@ namespace TwfApp.Types
                             {
                                 if (r.IsDBNull(i)) { values.Add("NULL"); continue; }
                                 var val = r.GetValue(i);
-                                if (val is string s)
+                                switch (val)
                                 {
-                                    values.Add($"'{s.Replace("'", "''")}'");
-                                }
-                                else if (val is byte[] b)
-                                {
-                                    values.Add($"X'" + BitConverter.ToString(b).Replace("-", "") + "'");
-                                }
-                                else if (val is bool bb)
-                                {
-                                    values.Add(bb ? "1" : "0");
-                                }
-                                else
-                                {
-                                    values.Add(Convert.ToString(val, System.Globalization.CultureInfo.InvariantCulture));
+                                    case string s:
+                                        values.Add($"'{s.Replace("'", "''")}'");
+                                        break;
+                                    case byte[] b:
+                                        values.Add($"X'" + Convert.ToHexString(b) + "'");
+                                        break;
+                                    case bool bb:
+                                        values.Add(bb ? "1" : "0");
+                                        break;
+                                    default:
+                                        values.Add(Convert.ToString(val, System.Globalization.CultureInfo.InvariantCulture));
+                                        break;
                                 }
                             }
                             sb.AppendLine($"INSERT INTO \"{table}\" ({colList}) VALUES ({string.Join(", ", values)});");
@@ -459,9 +461,9 @@ namespace TwfApp.Types
                     else
                     {
                         var rows = new List<Dictionary<string, object?>>();
-                        using var sel = _db.CreateCommand();
+                        await using var sel = _db.CreateCommand();
                         sel.CommandText = $"SELECT * FROM '{table}';";
-                        using var r = await sel.ExecuteReaderAsync();
+                        await using var r = await sel.ExecuteReaderAsync();
                         while (await r.ReadAsync())
                         {
                             var row = new Dictionary<string, object?>();
@@ -495,16 +497,16 @@ namespace TwfApp.Types
                         combined.AppendLine($"-- Table: {t.Key}");
                         combined.AppendLine(t.Value as string ?? string.Empty);
                     }
-                    return new(combined.ToString());
+                    return new Result<string, Exception>(combined.ToString());
                 }
 
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                var json = JsonSerializer.Serialize(export, options);
-                return new(json);
+                
+                var json = JsonSerializer.Serialize(export, _exportOptions);
+                return new Result<string, Exception>(json);
             }
             catch (Exception ex)
             {
-                return new(ex);
+                return new Result<string, Exception>(ex);
             }
         }
     }

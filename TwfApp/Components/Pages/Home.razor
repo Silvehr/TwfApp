@@ -3,13 +3,12 @@
 @using Microsoft.Data.Sqlite
 @using TwfApp.Types.Config
 @using TwfApp.Types.Modals
-@inject ServiceStartupResultCollectorService ResultCollector
 @inject NavigationManager Navigation;
 @inject JokeService JokeService;
 @inject AppInitializer Initializer
 @inject ModalService Modal;
 <div class="home-root">
-    <h2 style="width: 100%">
+    <h2 style="width: 100%; font-family: 'ComicSans', sans-serif;">
         Żart na @(DateOnly.FromDateTime(DateTime.Now).ToString("dd.MM.yyyy"))
     </h2>
     <div class="joke-container">
@@ -32,15 +31,4 @@
             { DevicePlatform.iOS, ["public.json"] }
         }
     );
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        var jokeServiceInitializationResult = ResultCollector.GetServiceInitializationResult<JokeService>();
-        
-        if (jokeServiceInitializationResult is not null)
-        {
-            await Modal.ShowMessageAsync("Błąd uruchomienia aplikacji", jokeServiceInitializationResult.Message);
-        }  
-    }
 }

@@ -122,8 +122,11 @@
 
     private async Task Delete()
     {
-        await JokeService.Database.RemoveAsync(_model!.Id);
-        Navigation.NavigateTo("/items");
+        var result = await JokeService.Database.RemoveAsync(_model!.Id);
+        if (result is not null)
+            await Modal.ShowMessageAsync("Błąd usuwania", result.Message);
+        else
+            Navigation.NavigateTo("/items");
     }
 
     private async Task Save()
