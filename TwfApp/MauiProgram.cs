@@ -57,13 +57,10 @@ namespace TwfApp
 
         public async Task ReinitializeAsync()
         {
-            // zatrzymaj stare usługi
             await StopServicesAsync();
 
-            // wyczyść stan
             await ClearStateAsync();
 
-            // uruchom ponownie
             await InitializeAsync();
         }
 

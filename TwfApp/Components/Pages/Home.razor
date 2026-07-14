@@ -13,7 +13,7 @@
         Żart na @(DateOnly.FromDateTime(DateTime.Now).ToString("dd.MM.yyyy"))
     </h2>
     <div class="joke-container">
-        @(rawJoke)
+        @(RawJoke)
     </div>
 
     <button class="btn btn-primary" @onclick="JokeService.GenerateJoke">
@@ -22,21 +22,25 @@
 </div>
 
 @code{
-    MarkupString rawJoke => (MarkupString)(JokeService.CurrentJoke is null ? "Błąd generowania żartu" : JokeService.CurrentJoke.Content);
-    private static readonly FilePickerFileType JsonFileType = new FilePickerFileType(
+    MarkupString RawJoke => (MarkupString)(JokeService.CurrentJoke is null ? "Błąd generowania żartu" : JokeService.CurrentJoke.Content);
+    private static readonly FilePickerFileType JsonFileType = new(
         new Dictionary<DevicePlatform, IEnumerable<string>>
         {
-            { DevicePlatform.WinUI, new[] { ".json" } },
-            { DevicePlatform.MacCatalyst, new[] { "public.json" } },
-            { DevicePlatform.Android, new[] { "application/json","text/json","text/plain" } },
-            { DevicePlatform.iOS, new[] { "public.json" } }
+            { DevicePlatform.WinUI, [".json"] },
+            { DevicePlatform.MacCatalyst, ["public.json"] },
+            { DevicePlatform.Android, ["application/json","text/json","text/plain"] },
+            { DevicePlatform.iOS, ["public.json"] }
         }
     );
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-
+        var jokeServiceInitializationResult = ResultCollector.GetServiceInitializationResult<JokeService>();
         
+        if (jokeServiceInitializationResult is not null)
+        {
+            await Modal.ShowMessageAsync("Błąd uruchomienia aplikacji", jokeServiceInitializationResult.Message);
+        }  
     }
 }

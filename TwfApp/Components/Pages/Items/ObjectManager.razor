@@ -1,4 +1,4 @@
-﻿@inject JokeService jokeService;
+﻿@inject JokeService JokeService;
 @inject ModalService Modal;
 @using TwfApp.Components.Partials
 @using TwfApp.Types.Modals
@@ -7,13 +7,13 @@
 <div class="component-container">
     <div class="page-header">
         <div class="input-group om-item om-searchbar">
-            <InputText @bind-Value="searchTerm" placeholder="Wyszukaj przedmiot..." class="form-control"/>
+            <InputText @bind-Value="_searchTerm" placeholder="Wyszukaj przedmiot..." class="form-control"/>
             <button class="btn" @onclick="LoadJokeObjects">
                 <img src="glass.svg" class="icon" height="30"/>
             </button>
         </div>
         <div class="om-item">
-            Znaleziono @jokeObjects.Count przedmiotów
+            Znaleziono @_jokeObjects.Count przedmiotów
         </div>
         <div class="input-group om-item">
             <NavLink class="btn btn-primary" href="/items/new" style="width: 100%">
@@ -23,7 +23,7 @@
     </div>
     <div class="om-body">
         <div class="om-search-result">
-            @foreach(var jokeObject in jokeObjects)
+            @foreach(var jokeObject in _jokeObjects)
             {
                 <JokeObjectItem @key="jokeObject.Id" Model="jokeObject" />
             }
@@ -33,9 +33,9 @@
 </div>
 
 @code {
-    private string searchTerm = string.Empty;
+    private string _searchTerm = string.Empty;
 
-    private List<JokeObject> jokeObjects;
+    private List<JokeObject> _jokeObjects;
 
     protected override async Task OnInitializedAsync()
     {
@@ -44,15 +44,15 @@
 
     private async Task LoadJokeObjects()
     {
-        var result = await jokeService.Database.GetJokeObjectsAsync(searchTerm);
+        var result = await JokeService.Database.GetJokeObjectsAsync(_searchTerm);
         if (!result.IsSuccess)
         {
             await Modal.ShowMessageAsync("Błąd ładowania przedmiotów", $"Aplikacja trafiła na nieoczekiwany błąd podczas ładowania przedmiotów: {result.Error!.Message}");
-            jokeObjects = [];
+            _jokeObjects = [];
         }
         else
         {
-            jokeObjects = result.Value!.ToList();
+            _jokeObjects = result.Value!.ToList();
         }
     }
 }
