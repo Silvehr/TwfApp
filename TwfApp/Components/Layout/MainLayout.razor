@@ -1,5 +1,6 @@
 ﻿@using TwfApp.Components.Partials
 @using TwfApp.Types.Config
+@using TwfApp.Types.JokeGenerator
 @using TwfApp.Types.Modals
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
@@ -16,10 +17,11 @@
         @Body
     </main>
     <Drawer>
-        <DrawerEntryButton Name="Strona Główna" Icon="logo.png" OnClickCallback='async () => NavigationManager.NavigateTo("/") ' />
-        <DrawerEntryButton Name="Zarządzaj przedmiotami" Icon="boxes.svg" OnClickCallback='async () => NavigationManager.NavigateTo("/items") ' />
+        <DrawerEntryButton Name="Strona Główna" Icon="logo.png" OnClickCallback='() => NavigationManager.NavigateTo("/") ' />
+        <DrawerEntryButton Name="Zarządzaj przedmiotami" Icon="boxes.svg" OnClickCallback='() => NavigationManager.NavigateTo("/items") ' />
         <DrawerEntryButton Name="Importuj przedmioty" Icon="download.svg" OnClickCallback="Import" />
         <DrawerEntryButton Name="Eksportuj przedmioty" Icon="upload.svg" OnClickCallback="Export" />
+        <DrawerEntryButton Name="Archiwum" Icon="" OnClickCallback='() => NavigationManager.NavigateTo("/archive")'/>
     </Drawer>
 </div>
 
@@ -46,7 +48,7 @@
             if (file is null)
                 return;
 
-            using var stream = await file.OpenReadAsync();
+            await using var stream = await file.OpenReadAsync();
             var jokeObjects = await JsonSerializer.DeserializeAsync<JokeObjectExportData>(stream);
 
             if (jokeObjects is null)
@@ -54,7 +56,7 @@
                 await Modal.ShowMessageAsync("Import zakończył się niepowodzeniem", "Dane są puste");
                 return;
             }
-
+            
             if (!DataVersion.IsCompatible(Config.Version, jokeObjects.Version))
             {
                 await Modal.ShowMessageAsync("Import zakończył się niepowodzeniem", "Dane są niekompatybilne z aktualną wersją aplikacji");
@@ -81,7 +83,7 @@
     {
         try
         {
-            var json = JsonSerializer.Serialize(await JokeService.ExportData());
+            var json = JsonSerializer.Serialize((await JokeService.ExportData()).Value);
 
 
             if (DeviceInfo.Current.Platform == DevicePlatform.Android || DeviceInfo.Current.Platform == DevicePlatform.iOS)

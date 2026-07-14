@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using SQLitePCL;
 using TwfApp.Types;
 using TwfApp.Types.Config;
+using TwfApp.Types.JokeGenerator;
 using TwfApp.Types.Modals;
 
 namespace TwfApp

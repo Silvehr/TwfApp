@@ -1,18 +1,11 @@
-﻿using Microsoft.Data.Sqlite;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.Data.Common;
 using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Maui.Storage;
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
 using TwfApp.Types.Config;
 using TwfApp.Types.Results;
-using System.Data.Common;
 
-namespace TwfApp.Types
+namespace TwfApp.Types.JokeGenerator
 {
     public class JokeObjectDb
     {

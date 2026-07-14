@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using TwfApp.Types.Config;
 using TwfApp.Types.Results;
 
-namespace TwfApp.Types
+namespace TwfApp.Types.JokeGenerator
 {
     public class JokeService(JokeObjectDb db, AppConfig config, ServiceStartupResultCollectorService resultCollector)
     {
@@ -17,7 +14,7 @@ namespace TwfApp.Types
         
         public async Task<Exception?> Initialize()
         {
-            Exception? e = await Database.Initialize();
+            var e = await Database.Initialize();
 
             if (e is not null) {
                 return e;
@@ -91,7 +88,7 @@ namespace TwfApp.Types
 
             await JsonSerializer.SerializeAsync(writeStream, CurrentJoke);
 
-            writeStream.Dispose();
+            await writeStream.DisposeAsync();
             return null;
         }
 

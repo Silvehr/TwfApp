@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TwfApp.Types
+﻿namespace TwfApp.Types.JokeGenerator
 {
     public enum JokeObjectType
     {

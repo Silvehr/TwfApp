@@ -13,7 +13,9 @@ CREATE TABLE IF NOT EXISTS "JokeObjects" (
 );
 
 CREATE TABLE IF NOT EXISTS "DatabaseVersion" (
-	VersionNumber INTEGER NOT NULL 
+    DataName VARCHAR(255) PRIMARY KEY,
+	MajorVersion INTEGER NOT NULL,
+    MinorVersion INTEGER NOT NULL
 );
 -- </TABLES>
 
