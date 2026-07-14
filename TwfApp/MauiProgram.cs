@@ -76,7 +76,7 @@ namespace TwfApp
 
         private Task ClearStateAsync()
         {
-            var jokeService = _serviceProvider.GetService<JokeService>();
+            var jokeService = _serviceProvider.GetRequiredService<JokeService>();
             File.Delete(jokeService.Database.DbFilePath);
             File.Delete(jokeService.CurrentJokeFilePath);
             return Task.CompletedTask;
