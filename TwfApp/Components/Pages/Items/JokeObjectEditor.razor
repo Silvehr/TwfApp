@@ -1,0 +1,157 @@
+﻿@page "/items/{Mode}/{Id:int?}";
+@using System.Data.Common
+@using TwfApp.Types.Modals
+@inject JokeService JokeService;
+@inject ModalService Modal;
+@inject NavigationManager Navigation;
+
+<div class="page-container">
+    <label id="item-title">
+        <h2>
+            @switch (Mode)
+            {
+                case "edit":
+                    @($"Edytowanie ")
+                    break;
+
+                case "new":
+                    @("Nowy przedmiot")
+                    break;
+            }
+        </h2>
+        <InputText @bind-Value="model!.Name" disabled='@(Mode == "view")' placeholder="Nazwa przedmiotu" />
+    </label>
+    
+    <label>
+        <span class="field-name">Autor: </span>
+        <InputText @bind-Value="model.Author" disabled='@(Mode == "view")' />
+    </label>
+    <label>
+        <span class="field-name">Opis</span>
+        <InputTextArea @bind-Value="model.Description" disabled='@(Mode == "view")' />
+    </label>
+    <label>
+        <span class="field-name">Rodzaj</span>
+        <InputSelect @bind-Value="model.Type" disabled="@(Mode == "view")">
+            <option value="@JokeObjectType.GenericObject">
+                Obiekt podstawowy
+            </option>
+            <option value="@JokeObjectType.Food">
+                Jedzenie
+            </option>
+        </InputSelect>
+    </label>
+    <label>
+        <span class="field-name">Data powstania</span>
+        <InputDate @bind-Value="model.CreationDate" TValue="DateTime" disabled='@(Mode == "view")' />
+    </label>
+
+    <span class="actions">
+        <button class="btn btn-outline-secondary" @onclick='() => Navigation.NavigateTo("/items")'>
+            Wróć
+        </button>
+        @if(Mode == "view")
+        {
+            @if(model.Editable)
+            {
+                <button class="btn btn-secondary" @onclick='() => Navigation.NavigateTo($"/items/edit/${Id}")'>
+                    Edytuj
+                </button>
+            }
+        }
+        else
+        {
+            @if(Mode == "edit")
+            {
+                <button class="btn btn-danger" @onclick="Delete">
+                    Usuń
+                </button>
+            }
+
+            <button class="btn btn-secondary" @onclick='Save'>
+                Zapisz
+            </button>
+        }
+    </span>
+</div>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    [Parameter]
+    public string Mode { get; set; }
+
+    private JokeObject? model;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        switch(Mode)
+        {
+            case "view":
+            case "edit":
+                if (Id is null)
+                {
+                    Navigation.NotFound();
+                    return;
+                }
+
+                var result = await JokeService.Database.GetByIdAsync(Id.Value);
+                if (!result.IsSuccess)
+                {
+                    await Modal.ShowMessageAsync("Błąd", $"Aplikacja trafiła na nieoczekiwany bład: {result.Error!.Message}");
+                    return;
+                }
+                model = result.Value!;
+
+                if(model is null)
+                {
+                    Navigation.NotFound();
+                    return;
+                }
+                break;
+
+            case "new":
+                model = new JokeObject(0, "", "", "", JokeObjectType.GenericObject, DateTime.Today);
+                Id = null;
+                break;
+        }
+    }
+
+    private async Task Delete()
+    {
+        await JokeService.Database.RemoveAsync(model!.Id);
+        Navigation.NavigateTo("/items");
+    }
+
+    private async Task Save()
+    { 
+        if (Mode == "edit")
+        {
+            var editResult = await JokeService.Database.EditAsync(model!);
+            if(editResult is not null)
+                await Modal.ShowMessageAsync("Błąd edycji", $"Aplikacja trafiła na nieoczekiwany błąd podczas zapisywania zmian: {editResult.Message}");
+        } 
+        else
+        {
+            var result = await JokeService.Database.CreateAsync(model.Author, model.Name, model.Description, model.Type, model.CreationDate);
+
+            if(!result.IsSuccess)
+            {
+                switch (result.Error)
+                {
+                    case InvalidOperationException:
+                        await Modal.ShowMessageAsync("Błąd tworzenia", "Obiekt z tą samą nazwą już istnieje!");
+                        break;
+
+                    case DbException dbE:
+                        await Modal.ShowMessageAsync("Błąd tworzenia", $"Aplikacja trafila na nieoczekiwany błąd podczas tworzenia: {dbE.Message}");
+                        break;
+                }
+            }
+        }
+        Navigation.NavigateTo($"/items/view/{Id}"); 
+    }
+}

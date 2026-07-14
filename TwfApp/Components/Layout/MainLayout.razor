@@ -1,0 +1,110 @@
+﻿@using TwfApp.Components.Partials
+@using TwfApp.Types.Config
+@using TwfApp.Types.Modals
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject ModalService Modal
+@inject JokeService JokeService
+@inject AppConfig Config
+
+<ModalHost @ref="_modalHost"/>
+
+<div class="page">
+    <span class="spacer"></span>
+
+    <main>
+        @Body
+    </main>
+    <Drawer>
+        <DrawerEntryButton Name="Strona Główna" Icon="logo.png" OnClickCallback='async () => NavigationManager.NavigateTo("/") ' />
+        <DrawerEntryButton Name="Zarządzaj przedmiotami" Icon="boxes.svg" OnClickCallback='async () => NavigationManager.NavigateTo("/items") ' />
+        <DrawerEntryButton Name="Importuj przedmioty" Icon="download.svg" OnClickCallback="Import" />
+        <DrawerEntryButton Name="Eksportuj przedmioty" Icon="upload.svg" OnClickCallback="Export" />
+    </Drawer>
+</div>
+
+@code {
+    private string opMessage = string.Empty;
+    private ModalHost _modalHost;
+
+    private static readonly FilePickerFileType JsonFileType = new FilePickerFileType(
+        new Dictionary<DevicePlatform, IEnumerable<string>>
+        {
+            { DevicePlatform.WinUI, new[] { ".json" } },
+            { DevicePlatform.MacCatalyst, new[] { "public.json" } },
+            { DevicePlatform.Android, new[] { "application/json","text/json","text/plain" } },
+            { DevicePlatform.iOS, new[] { "public.json" } }
+        }
+    );
+
+    private async Task Import()
+    {
+        try
+        {
+            var file = await FilePicker.Default.PickAsync();
+
+            if (file is null)
+                return;
+
+            using var stream = await file.OpenReadAsync();
+            var jokeObjects = await JsonSerializer.DeserializeAsync<JokeObjectExportData>(stream);
+
+            if (jokeObjects is null)
+            {
+                await Modal.ShowMessageAsync("Import zakończył się niepowodzeniem", "Dane są puste");
+                return;
+            }
+
+            if (!DataVersion.IsCompatible(Config.Version, jokeObjects.Version))
+            {
+                await Modal.ShowMessageAsync("Import zakończył się niepowodzeniem", "Dane są niekompatybilne z aktualną wersją aplikacji");
+                return;
+            }
+
+            await JokeService.Database.AppendRangeAsync(jokeObjects.JokeObjects);
+            if(new Uri(NavigationManager.Uri).AbsolutePath == "/items")
+            {
+                NavigationManager.Refresh(true);
+            }
+        }
+        catch(JsonException)
+        {
+            await Modal.ShowMessageAsync("Import zakończył się niepowodzeniem", "Dane są w niepoprawnym formacie");
+        }
+        catch (Exception ex)
+        {
+            opMessage = ex.Message;
+        }
+    }
+
+    private async Task Export()
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(await JokeService.ExportData());
+
+
+            if (DeviceInfo.Current.Platform == DevicePlatform.Android || DeviceInfo.Current.Platform == DevicePlatform.iOS)
+            {
+                var path = Path.Combine(FileSystem.Current.CacheDirectory, "jokeExport.json");
+                await File.WriteAllTextAsync(path, json);
+
+                await Share.Default.RequestAsync(new ShareFileRequest { Title = "Eksportuj przedmioty", File = new ShareFile(path) });
+            }
+            else
+            {
+                var result = await FilePicker.Default.PickAsync(new PickOptions
+                {
+                    PickerTitle = "Wybierz miejsce do zapisania pliku",
+                    FileTypes = JsonFileType
+                });
+                if (result is null)
+                    return;
+            }
+        }
+        catch (Exception ex)
+        {
+            opMessage = ex.Message;
+        }
+    }
+}

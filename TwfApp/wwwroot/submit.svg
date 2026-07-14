@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   width="454.54074"
+   height="333.33002"
+   viewBox="0 0 13.636222 9.9999005"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="submit.svg"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview5"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="1.05375"
+     inkscape:cx="457.414"
+     inkscape:cy="155.16014"
+     inkscape:window-width="2560"
+     inkscape:window-height="1369"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg5" />
+  <defs
+     id="defs1">
+    <path
+       id="check-a"
+       d="m 4.2928932,0.29289322 c 0.3905243,-0.39052429 1.0236893,-0.39052429 1.4142136,0 0.3905243,0.39052429 0.3905243,1.02368928 0,1.41421358 L 1.9091797,5.4611816 c -0.3905243,0.3905243 -1.02368928,0.3905243 -1.41421358,0 -0.39052429,-0.3905243 -0.39052429,-1.0236892 0,-1.4142135 z" />
+    <path
+       id="check-c"
+       d="m 10.707107,13.292893 c 0.390524,0.390524 0.390524,1.02369 0,1.414214 -0.390524,0.390524 -1.0236895,0.390524 -1.4142138,0 L 0.29289322,5.7071068 c -0.39052429,-0.3905243 -0.39052429,-1.0236893 0,-1.4142136 L 4.2928932,0.29289322 c 0.3905243,-0.39052429 1.0236893,-0.39052429 1.4142136,0 0.3905243,0.39052429 0.3905243,1.02368928 0,1.41421358 L 2.4142136,5 Z" />
+    <mask
+       id="check-d"
+       fill="#ffffff">
+      <use
+         xlink:href="#check-c"
+         id="use3" />
+    </mask>
+  </defs>
+  <path
+     id="rect4"
+     style="fill:#400040;fill-opacity:1;fill-rule:evenodd;stroke-width:0.90908"
+     d="m 12.727139,0 c -0.232653,0 -0.46531,0.08877 -0.642818,0.26627881 L 4.5454201,7.8051799 1.5519005,4.8116611 c -0.3550176,-0.3550179 -0.9306198,-0.3550179 -1.2856373,0 -0.3550176,0.3550178 -0.3550176,0.9306202 0,1.285638 l 3.6363373,3.6363377 c 0.3550176,0.3550182 0.9306207,0.3550182 1.2856382,0 l 8.1817203,-8.18172 c 0.355017,-0.3550179 0.355017,-0.93062046 0,-1.28563799 C 13.19245,0.08877003 12.959794,0 12.727139,0 Z" />
+  <g
+     fill="#7600ff"
+     mask="url(#check-d)"
+     id="g4"
+     transform="rotate(-90,4.1192297,6.0266891)"
+     style="fill:#400040;fill-opacity:1;fill-rule:evenodd" />
+</svg>

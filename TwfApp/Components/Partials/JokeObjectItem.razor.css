@@ -1,0 +1,52 @@
+/* CSS for JokeObjectItem component */
+
+.joke-object-container {
+    height: auto;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 2px 2px 10px 0px rgba(0, 0, 0, 0.25);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    border-radius: 5px;
+    border: 2px solid #400040;
+}
+
+h4{
+    font-size: 20px;
+}
+
+h5{
+    font-size: 18px;
+}
+
+span{
+    height: fit-content;
+}
+
+.joke-object-info{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+.joke-object-info, .joke-object-actions{
+    height: 80px;
+}
+
+.joke-object-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.joke-object-action{
+    height:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center
+}
+
+.joke-object-container img{
+    width: 30px;
+}

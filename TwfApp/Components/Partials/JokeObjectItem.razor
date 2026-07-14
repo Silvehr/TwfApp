@@ -1,0 +1,27 @@
+﻿<div class="joke-object-container">
+    <div class="joke-object-info">
+        <h4>@Model.Name</h4>
+        <h5>@Model.Author</h5>
+        <span>@Model.CreationDate.ToString("dd.MM.yyyy")</span>
+    </div>
+    <div class="joke-object-actions">
+        @if (Model.Editable)
+        {
+            <div class="joke-object-action">
+                <NavLink href='@($"/items/edit/{Model.Id}")'>
+                    <img src="edit.svg"/>
+                </NavLink>
+            </div>
+        }
+        <div class="joke-object-action">
+            <NavLink href="@($"/items/view/{Model.Id}")">
+                <img src="info.svg" />
+            </NavLink>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public JokeObject Model { get; set; }
+}

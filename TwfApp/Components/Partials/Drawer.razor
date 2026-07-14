@@ -1,0 +1,52 @@
+﻿@using TwfApp.Components.Partials
+@inject NavigationManager NavManager;
+
+<div class="overlay @(IsOpen ? "visible" : "")" @onclick="() => IsOpen = !IsOpen"></div>
+
+<aside class="drawer @(IsOpen ? "open" : "")">
+    <button class="drawer-handle" @onclick="() => IsOpen = !IsOpen">
+        <img src="logo.png"/>
+    </button>
+    <div class="drawer-content">
+        <CascadingValue Value='this' >
+            @ChildContent
+        </CascadingValue>
+    </div>
+</aside>
+
+@code {
+
+    [Parameter]
+    public bool IsOpen { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsOpenChanged { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        NavManager.LocationChanged += async (e, o) =>
+        {
+            this.IsOpen = false;
+        };
+    }
+
+    public void Show()
+    {
+        IsOpen = true;
+    }
+
+    public void Hide()
+    {
+        IsOpen = false;
+    }
+
+    public void Toggle()
+    {
+        IsOpen = !IsOpen;
+    }
+}

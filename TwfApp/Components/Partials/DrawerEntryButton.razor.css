@@ -1,0 +1,24 @@
+.drawer-entry{
+    text-align: center;
+    margin: 0;
+}
+.icon {
+    height: 60px;
+    text-align: center;
+
+    img {
+        height: 60px;
+        clip-path: circle(50%);
+    }
+}
+
+.link {
+    height: 30px;
+}
+
+button{
+    border: none;
+    outline: none;
+    background: none;
+    font-weight: bold;
+}

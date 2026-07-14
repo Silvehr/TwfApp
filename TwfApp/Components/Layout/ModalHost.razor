@@ -1,0 +1,69 @@
+﻿@using TwfApp.Types.Modals;
+@inject ModalService Modal
+
+@if (_visible)
+{
+    <div class="modal-overlay">
+
+        <div class="modal-window">
+
+            <h3>@_request!.Title</h3>
+
+            @if (!string.IsNullOrWhiteSpace(_request.Message))
+            {
+                <p>@_request.Message</p>
+            }
+
+            @_request.Content
+
+            <div class="modal-buttons">
+                @foreach (var button in _request.Buttons)
+                {
+                    <button class="@button.CssClass"
+                            @onclick="() => Close(button.Result)">
+                        @button.Text
+                    </button>
+                }
+            </div>
+
+        </div>
+
+    </div>
+}
+
+@code
+{
+    private bool _visible;
+
+    private ModalRequest? _request;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Modal.ShowRequested += Show;
+        await Modal.RaiseModelHostInitialized();
+    }
+
+    private Task Show(ModalRequest request)
+    {
+        _request = request;
+        _visible = true;
+
+        InvokeAsync(StateHasChanged);
+
+        return Task.CompletedTask;
+    }
+
+    private Task Close(object? result)
+    {
+        _visible = false;
+
+        _request!.Completion!.SetResult(result);
+
+        return InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Modal.ShowRequested -= Show;
+    }
+}

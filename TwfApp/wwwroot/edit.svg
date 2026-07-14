@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   width="333.33301"
+   height="333.33301"
+   viewBox="0 0 9.99999 9.99999"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="edit.svg"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview5"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="0.74503418"
+     inkscape:cx="267.10184"
+     inkscape:cy="420.78606"
+     inkscape:window-width="2560"
+     inkscape:window-height="1369"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg5" />
+  <defs
+     id="defs1">
+    <path
+       id="pencil-a"
+       d="M 2.0901879,12.087524 6,15.997336 4.045094,17.952242 H 0.36242676 v -4.29892 z M 14.831787,0 18.656494,4.0141602 15.913086,6.7736816 12,2.7331543 Z" />
+    <path
+       id="pencil-c"
+       d="M 13.667262,3.5961941 V 1.1672619 H 9.6672619 v 2.4289322 z m 0,2 H 9.6672619 V 20.167262 l 2.0000001,2 2,-2 z M 9.6672619,-0.83273811 h 4.0000001 c 1.104569,0 2,0.8954305 2,2.00000001 V 20.167262 c 0,0.530433 -0.210714,1.039141 -0.585786,1.414213 l -2,2 c -0.781049,0.781049 -2.047379,0.781049 -2.828428,0 l -1.9999997,-2 C 7.8779756,21.206403 7.6672619,20.697695 7.6672619,20.167262 V 1.1672619 c 0,-1.10456951 0.8954305,-2.00000001 2,-2.00000001 z" />
+    <mask
+       id="pencil-d"
+       fill="#ffffff">
+      <use
+         xlink:href="#pencil-c"
+         id="use3" />
+    </mask>
+  </defs>
+  <g
+     fill="#7600ff"
+     mask="url(#pencil-d)"
+     id="g4"
+     style="fill:#400040;fill-opacity:1;fill-rule:evenodd"
+     transform="matrix(0.3489563,0.3489563,-0.3489563,0.3489563,4.6510386,-2.7937779)">
+    <rect
+       width="24"
+       height="24"
+       id="rect4"
+       x="0"
+       y="0"
+       style="fill:#400040;fill-opacity:1" />
+  </g>
+</svg>

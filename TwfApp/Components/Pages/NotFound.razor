@@ -1,0 +1,15 @@
+﻿@page "/NotFound"
+@using TwfApp.Types.Modals
+@inject ModalService Modal;
+@inject NavigationManager Navigation;
+
+<h3>NotFound</h3>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await Modal.ShowMessageAsync("Błąd", "Nie znaleziono orkeślongeo obiektu");
+        Navigation.NavigateTo("/");
+    }
+}

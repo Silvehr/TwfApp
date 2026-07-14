@@ -1,0 +1,24 @@
+﻿<div class="drawer-entry">
+    <span class="icon">
+        <img src="@(Icon)" @onclick="async () => { Drawer.Hide(); await OnClickCallback.InvokeAsync();}" />
+    </span>
+    <span class="link">
+        <button >
+            @Name
+        </button>
+    </span>
+</div>
+
+@code {
+    [Parameter]
+    public string Name { get; set; }
+
+    [Parameter]
+    public string Icon { get; set; }
+
+    [CascadingParameter]
+    public Drawer Drawer { get; set; }
+
+    [Parameter]
+    public EventCallback OnClickCallback { get; set; }
+}

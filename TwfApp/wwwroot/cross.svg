@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   width="333.33334"
+   height="333.33334"
+   viewBox="0 0 10 10"
+   version="1.1"
+   id="svg6"
+   sodipodi:docname="cross.svg"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview6"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="1.0249365"
+     inkscape:cx="157.0829"
+     inkscape:cy="165.3761"
+     inkscape:window-width="2560"
+     inkscape:window-height="1369"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg6" />
+  <defs
+     id="defs1">
+    <path
+       id="cross-a"
+       d="m 0.29289322,1.7071068 c -0.39052429,-0.3905243 -0.39052429,-1.02368929 0,-1.41421358 0.39052429,-0.39052429 1.02368928,-0.39052429 1.41421358,0 l 8,7.99999998 c 0.3905242,0.3905243 0.3905242,1.0236893 0,1.4142136 -0.3905243,0.3905242 -1.0236893,0.3905242 -1.4142136,0 z" />
+    <path
+       id="cross-c"
+       d="M 3.5857864,5 0.29289322,1.7071068 c -0.39052429,-0.3905243 -0.39052429,-1.02368929 0,-1.41421358 0.39052429,-0.39052429 1.02368928,-0.39052429 1.41421358,0 L 5,3.5857864 8.2928932,0.29289322 c 0.3905243,-0.39052429 1.0236893,-0.39052429 1.4142136,0 0.3905242,0.39052429 0.3905242,1.02368928 0,1.41421358 L 6.4142136,5 9.7071068,8.2928932 c 0.3905242,0.3905243 0.3905242,1.0236893 0,1.4142136 -0.3905243,0.3905242 -1.0236893,0.3905242 -1.4142136,0 L 5,6.4142136 1.7071068,9.7071068 c -0.3905243,0.3905242 -1.02368929,0.3905242 -1.41421358,0 -0.39052429,-0.3905243 -0.39052429,-1.0236893 0,-1.4142136 z" />
+  </defs>
+  <g
+     transform="rotate(-90,5,5)"
+     id="g5"
+     style="fill:#400040;fill-opacity:1;fill-rule:evenodd">
+    <mask
+       id="cross-d"
+       fill="#ffffff">
+      <use
+         xlink:href="#cross-c"
+         id="use3" />
+    </mask>
+    <use
+       fill="#000000"
+       fill-rule="nonzero"
+       xlink:href="#cross-c"
+       id="use4"
+       style="fill:#400040;fill-opacity:1" />
+    <g
+       fill="#7600ff"
+       mask="url(#cross-d)"
+       id="g4"
+       style="fill:#400040;fill-opacity:1">
+      <rect
+         width="24"
+         height="24"
+         transform="translate(-7,-7)"
+         id="rect4"
+         x="0"
+         y="0"
+         style="fill:#400040;fill-opacity:1" />
+    </g>
+  </g>
+</svg>
